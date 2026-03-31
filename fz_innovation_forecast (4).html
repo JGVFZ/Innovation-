@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fortescue Zero — Innovation Platform</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Barlow:wght@300;400;500;600;700;800&family=Barlow+Condensed:wght@500;600;700;800&display=swap');
+
+:root {
+  --bg:       #ffffff;
+  --surface:  #ffffff;
+  --s2:       #f4f7f0;
+  --s3:       #eef2e8;
+  --border:   #d8e0cc;
+  --border2:  #b8c8a0;
+  --g:        #6aaa00;
+  --g2:       #558800;
+  --g3:       #3d6600;
+  --gdim:     rgba(106,170,0,0.09);
+  --text:     #111a08;
+  --muted:    #4a5e2a;
+  --muted2:   #8aaa50;
+  --danger:   #cc2200;
+  --ddim:     rgba(204,34,0,0.07);
+  --grid:     rgba(106,170,0,0.07);
+
+  /* pipeline stage colours — green/black spectrum */
+  --c-idea:   #c8f060;   /* lime */
+  --c-eval:   #6aaa00;   /* mid green */
+  --c-proto:  #2d7a00;   /* deep green */
+  --c-impl:   #111a08;   /* near-black */
+
+  /* stream row tints */
+  --r-power:  rgba(106,170,0,0.12);
+  --r-elysia: rgba(45,122,0,0.12);
+  --r-mae:    rgba(17,26,8,0.07);
+  --r-adj:    rgba(200,240,96,0.15);
+}
+
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;
+  background:repeating-linear-gradient(0deg,var(--grid) 0,var(--grid) 1px,transparent 1px,transparent 80px),
+             repeating-linear-gradient(90deg,var(--grid) 0,var(--grid) 1px,transparent 1px,transparent 80px);
+  pointer-events:none;z-index:0;}
+
+.wrap{max-width:1520px;margin:0 auto;padding:0 28px;position:relative;z-index:1;}
+
+/* ── HEADER ─────────────────────────────────────────────── */
+header{padding:30px 0 22px;border-bottom:1px solid var(--border);border-top:4px solid var(--g);}
+.hdr{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;}
+.brand-eye{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--g);margin-bottom:5px;}
+.brand-row{display:flex;align-items:baseline;gap:8px;}
+.brand-f{font-family:'Barlow Condensed',sans-serif;font-size:clamp(24px,3vw,40px);font-weight:800;color:var(--text);text-transform:uppercase;letter-spacing:-0.5px;}
+.brand-z{font-family:'Barlow Condensed',sans-serif;font-size:clamp(24px,3vw,40px);font-weight:800;color:var(--g);text-transform:uppercase;letter-spacing:-0.5px;}
+.brand-sub{font-size:12px;color:var(--muted);margin-top:4px;}
+.hdr-r{text-align:right;}
+.hdr-date{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1px;}
+.hdr-date span{color:var(--g);}
+.hdr-bdg{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:700;color:var(--text);letter-spacing:-0.5px;margin-top:3px;}
+.hdr-bdg small{font-size:12px;font-family:'Barlow',sans-serif;font-weight:400;color:var(--muted);margin-left:4px;}
+
+/* ── KPI STRIP ──────────────────────────────────────────── */
+.kpi-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));
+  gap:1px;background:var(--border);border:1px solid var(--border);
+  border-radius:10px;overflow:hidden;margin:20px 0;}
+.kpi{background:var(--surface);padding:16px 18px;display:flex;flex-direction:column;gap:4px;transition:background .2s;}
+.kpi:hover{background:var(--s2);}
+.kpi-l{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);}
+.kpi-v{font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:700;letter-spacing:-.5px;line-height:1;color:var(--text);}
+.kpi-v.g{color:var(--g);}
+.kpi-s{font-size:11px;color:var(--muted);}
+
+/* ── ALERTS ─────────────────────────────────────────────── */
+.alert{display:none;margin-top:12px;padding:9px 14px;border-radius:5px;border:1px solid;
+  font-family:'DM Mono',monospace;font-size:11px;}
+.alert.show{display:block;}
+.al-d{border-color:var(--danger);color:var(--danger);background:var(--ddim);}
+.al-w{border-color:var(--g);color:var(--g2);background:var(--gdim);}
+
+/* ── TABS ───────────────────────────────────────────────── */
+.tabs{display:flex;gap:3px;background:var(--surface);border:1px solid var(--border);
+  border-radius:8px;padding:3px;width:fit-content;margin-bottom:20px;}
+.tab-btn{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;
+  padding:8px 22px;border-radius:6px;border:none;cursor:pointer;background:transparent;color:var(--muted);transition:all .18s;}
+.tab-btn.active{background:var(--g);color:#fff;font-weight:700;}
+.tab-btn:hover:not(.active){color:var(--text);background:var(--s2);}
+.panel{display:none;}.panel.active{display:block;}
+
+/* ── SHARED BUTTONS ──────────────────────────────────────── */
+.btn{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;
+  padding:7px 15px;border-radius:5px;border:1px solid;cursor:pointer;transition:all .18s;}
+.btn-p{background:var(--g);color:#fff;border-color:var(--g);font-weight:700;}
+.btn-p:hover{background:var(--g2);border-color:var(--g2);}
+.btn-g{background:transparent;color:var(--g);border-color:var(--border2);}
+.btn-g:hover{border-color:var(--g);background:var(--gdim);}
+.btn-sm{padding:5px 11px;font-size:8px;}
+
+/* ═══════════════════════════════════════════════════════════
+   PIPELINE PANEL
+═══════════════════════════════════════════════════════════ */
+.pipe-wrap{overflow-x:auto;padding-bottom:8px;}
+.pipe-inner{min-width:960px;}
+
+/* stage header row */
+.pipe-header{display:grid;grid-template-columns:90px repeat(4,1fr);gap:2px;margin-bottom:2px;}
+.pipe-stage-hdr{padding:10px 14px;border-radius:6px 6px 0 0;font-family:'Barlow Condensed',sans-serif;
+  font-size:13px;font-weight:700;letter-spacing:.3px;text-align:center;color:#fff;}
+.ph-blank{background:transparent;}
+.ph-idea {background:var(--c-idea);color:var(--text);}
+.ph-eval {background:var(--c-eval);}
+.ph-proto{background:var(--c-proto);}
+.ph-impl {background:var(--c-impl);}
+
+/* stage description subrow */
+.pipe-desc-row{display:grid;grid-template-columns:90px repeat(4,1fr);gap:2px;margin-bottom:3px;}
+.pipe-desc{padding:8px 12px;font-size:11px;color:var(--muted);line-height:1.5;background:var(--s2);
+  border-bottom:2px solid var(--border);}
+.pipe-desc strong{color:var(--text);font-weight:600;}
+.pd-blank{background:transparent;border-bottom:2px solid transparent;}
+
+/* stream rows */
+.pipe-row{display:grid;grid-template-columns:90px repeat(4,1fr);gap:2px;margin-bottom:3px;min-height:80px;}
+.stream-label{display:flex;align-items:center;justify-content:center;border-radius:4px;
+  font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;text-align:center;
+  padding:8px 6px;line-height:1.3;writing-mode:initial;}
+.sl-power {background:var(--g); color:#fff;}
+.sl-elysia{background:var(--c-proto);color:#fff;}
+.sl-mae   {background:var(--text);color:#fff;}
+.sl-adj   {background:var(--c-eval);color:#fff;}
+
+/* stage cell */
+.stage-cell{background:var(--s2);border:1px solid var(--border);border-radius:4px;
+  padding:8px;min-height:80px;position:relative;transition:background .15s;}
+.stage-cell.drag-over{background:var(--gdim);border-color:var(--g);border-style:dashed;}
+.stage-cell.drag-over-invalid{background:var(--ddim);border-color:var(--danger);border-style:dashed;}
+
+/* project card in pipeline */
+.proj-card{background:#fff;border:1px solid var(--border);border-radius:5px;
+  padding:8px 10px;margin-bottom:6px;cursor:grab;position:relative;
+  transition:box-shadow .15s,transform .15s;user-select:none;}
+.proj-card:hover{box-shadow:0 2px 8px rgba(106,170,0,0.18);transform:translateY(-1px);}
+.proj-card:active{cursor:grabbing;box-shadow:0 4px 14px rgba(106,170,0,0.22);}
+.proj-card.dragging{opacity:.45;transform:rotate(1.5deg);}
+.pc-name{font-size:12px;font-weight:600;color:var(--text);line-height:1.3;margin-bottom:4px;padding-right:20px;}
+.pc-code{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted2);margin-bottom:4px;}
+.pc-fin{display:flex;gap:6px;flex-wrap:wrap;}
+.pc-pill{font-family:'DM Mono',monospace;font-size:9px;padding:2px 6px;border-radius:3px;
+  background:var(--s3);color:var(--muted);border:1px solid var(--border);}
+.pc-pill.alloc{background:var(--gdim);color:var(--g2);border-color:var(--border2);}
+.pc-pill.spent{background:rgba(17,26,8,0.06);color:var(--text);}
+.pc-info-btn{position:absolute;top:7px;right:7px;background:transparent;border:none;
+  cursor:pointer;color:var(--muted2);font-size:13px;line-height:1;padding:2px;
+  border-radius:3px;transition:all .15s;}
+.pc-info-btn:hover{color:var(--g);background:var(--gdim);}
+
+/* pipe toolbar */
+.pipe-toolbar{display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:16px;gap:12px;flex-wrap:wrap;}
+.pipe-ttl{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--g);}
+.drag-hint{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted2);letter-spacing:1px;}
+
+/* add-to-cell button */
+.add-card-btn{width:100%;border:1px dashed var(--border2);background:transparent;
+  border-radius:4px;padding:6px;color:var(--muted2);font-family:'DM Mono',monospace;
+  font-size:9px;cursor:pointer;transition:all .15s;letter-spacing:1px;text-transform:uppercase;}
+.add-card-btn:hover{border-color:var(--g);color:var(--g);background:var(--gdim);}
+
+/* ═══════════════════════════════════════════════════════════
+   FORECAST TABLE PANEL
+═══════════════════════════════════════════════════════════ */
+.tbl-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.tbl-bar{display:flex;align-items:center;justify-content:space-between;
+  padding:13px 18px;border-bottom:1px solid var(--border);gap:12px;flex-wrap:wrap;}
+.tbl-ttl{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--g);}
+.tbl-ctrl{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.yp{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;
+  padding:5px 11px;border-radius:20px;border:1px solid var(--border2);
+  background:transparent;color:var(--muted);cursor:pointer;transition:all .15s;}
+.yp.active{border-color:var(--g);color:var(--g);background:var(--gdim);}
+.yp:hover:not(.active){color:var(--text);}
+.tbl-scroll{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+.c-name{min-width:185px;max-width:220px;text-align:left;}
+.c-code{min-width:82px;text-align:left;}
+.c-alloc{min-width:108px;text-align:right;}
+.c-spent{min-width:165px;text-align:right;}
+.c-stage{min-width:120px;text-align:left;}
+.c-tot{min-width:110px;text-align:right;}
+.c-act{min-width:62px;text-align:center;}
+thead tr{background:var(--s2);}
+th{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--muted);padding:10px 13px;white-space:nowrap;border-bottom:1px solid var(--border2);}
+th.c-alloc{background:rgba(106,170,0,0.06);}
+th.c-tot{border-left:1px solid var(--border2);}
+td{padding:9px 13px;font-size:13px;border-bottom:1px solid rgba(216,224,204,0.5);vertical-align:middle;}
+td.c-name{font-weight:600;color:var(--text);}
+td.c-code{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);white-space:nowrap;}
+td.c-alloc{font-family:'DM Mono',monospace;font-size:12px;background:rgba(106,170,0,0.04);white-space:nowrap;}
+td.c-alloc.zv{color:var(--muted2);}
+td.c-alloc.nz{color:var(--text);}
+td.c-tot{font-family:'DM Mono',monospace;font-size:12px;font-weight:600;color:var(--g);border-left:1px solid var(--border);}
+td.c-act{white-space:nowrap;}
+td.c-stage{font-size:11px;}
+tbody tr:hover td{background:rgba(106,170,0,0.03) !important;}
+tfoot tr{background:var(--s2);}
+tfoot td{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;
+  color:var(--text);border-top:1px solid var(--border2);border-bottom:none;}
+tfoot td.c-name{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;}
+.spent-wrap{display:flex;align-items:center;gap:7px;justify-content:flex-end;}
+.pb{height:4px;width:52px;flex-shrink:0;border-radius:2px;background:var(--s3);overflow:hidden;}
+.pb-f{height:100%;border-radius:2px;background:var(--text);transition:width .4s;}
+.sv{font-family:'DM Mono',monospace;font-size:11px;min-width:66px;text-align:right;color:var(--text);}
+.sv.zv{color:var(--muted2);}
+/* stage badge in table */
+.stage-badge{display:inline-block;padding:2px 8px;border-radius:3px;font-family:'DM Mono',monospace;
+  font-size:9px;font-weight:500;letter-spacing:.5px;text-transform:uppercase;}
+.sb-idea {background:var(--c-idea);color:var(--text);}
+.sb-eval {background:var(--c-eval);color:#fff;}
+.sb-proto{background:var(--c-proto);color:#fff;}
+.sb-impl {background:var(--c-impl);color:#fff;}
+.sb-none {background:var(--s3);color:var(--muted2);}
+/* inline edit */
+td input{background:var(--s2);border:1px solid var(--g);color:var(--text);
+  padding:4px 7px;border-radius:4px;font-size:12px;font-family:'DM Mono',monospace;
+  width:88px;text-align:right;outline:none;}
+td input.ni{text-align:left;width:160px;font-family:'Barlow',sans-serif;font-size:13px;}
+td input.ci{width:76px;font-size:10px;}
+td select.si{background:var(--s2);border:1px solid var(--g);color:var(--text);
+  padding:4px 6px;border-radius:4px;font-size:11px;font-family:'Barlow',sans-serif;outline:none;}
+.ea{display:flex;gap:4px;justify-content:center;}
+.ib{background:transparent;border:none;cursor:pointer;padding:4px 5px;border-radius:4px;
+  color:var(--muted);font-size:13px;transition:all .15s;line-height:1;}
+.ib:hover{color:var(--g);background:var(--gdim);}
+.ib.d:hover{color:var(--danger);background:var(--ddim);}
+
+/* ── CHARTS ─────────────────────────────────────────────── */
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+@media(max-width:960px){.charts-grid{grid-template-columns:1fr;}}
+.cc{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;display:flex;flex-direction:column;}
+.cc-ttl{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;color:var(--text);}
+.cc-sub{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);margin-top:3px;letter-spacing:1px;}
+.cc-hdr{margin-bottom:14px;}
+.canvas-wrap{position:relative;flex:1;}
+.canvas-wrap canvas{display:block;}
+.wf-scroll{overflow-y:auto;max-height:290px;padding-right:4px;}
+.wf-row{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
+.wf-lbl{flex-shrink:0;width:150px;font-size:11px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.wf-trk{flex:1;height:18px;background:var(--s3);border-radius:3px;position:relative;overflow:hidden;}
+.wf-af{position:absolute;top:0;left:0;height:100%;background:rgba(106,170,0,0.3);border-radius:3px;}
+.wf-sf{position:absolute;top:0;left:0;height:100%;background:var(--text);border-radius:3px;}
+.wf-v{flex-shrink:0;width:60px;text-align:right;font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);}
+.leg{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;}
+.li{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;}
+.ld{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+
+/* ── TIMELINE ───────────────────────────────────────────── */
+.tl-outer{overflow-x:auto;}
+.tl-inner{min-width:640px;}
+.tl-yh{display:flex;padding-left:185px;margin-bottom:7px;}
+.tl-ylbl{flex:1;font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);text-align:center;letter-spacing:2px;text-transform:uppercase;}
+.tl-row2{display:flex;align-items:center;margin-bottom:5px;}
+.tl-n{flex-shrink:0;width:185px;font-size:11px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:10px;}
+.tl-trk{flex:1;display:grid;grid-template-columns:repeat(4,1fr);gap:2px;height:20px;}
+.tl-seg{border-radius:3px;display:flex;align-items:center;justify-content:center;
+  font-family:'DM Mono',monospace;font-size:9px;font-weight:500;color:#fff;transition:opacity .15s;cursor:default;}
+.tl-seg:hover{opacity:.7!important;}
+.tl-seg.emp{background:var(--s3)!important;color:transparent;}
+
+/* ════════════════════════════════════════════════════════════
+   PROJECT DETAIL POPOUT
+════════════════════════════════════════════════════════════ */
+.popout-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;
+  display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.popout-overlay.open{display:flex;}
+.popout{background:#fff;border:1px solid var(--border2);border-top:4px solid var(--g);
+  border-radius:12px;padding:28px;width:580px;max-width:95vw;max-height:90vh;
+  overflow-y:auto;position:relative;animation:pIn .18s ease;}
+@keyframes pIn{from{transform:translateY(12px);opacity:0}to{transform:translateY(0);opacity:1}}
+.po-close{position:absolute;top:14px;right:14px;background:transparent;border:none;
+  color:var(--muted);font-size:16px;cursor:pointer;transition:color .15s;line-height:1;}
+.po-close:hover{color:var(--text);}
+.po-name{font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;color:var(--text);margin-bottom:3px;}
+.po-code{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);margin-bottom:14px;letter-spacing:1px;}
+.po-stage-row{display:flex;align-items:center;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+.po-stream-badge{font-family:'DM Mono',monospace;font-size:9px;padding:3px 9px;border-radius:3px;
+  font-weight:500;letter-spacing:.5px;text-transform:uppercase;}
+.po-section{margin-bottom:18px;}
+.po-section-ttl{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;
+  color:var(--g);border-bottom:1px solid var(--border);padding-bottom:6px;margin-bottom:10px;}
+.po-fin-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.po-fin-cell{background:var(--s2);border-radius:5px;padding:10px 12px;text-align:center;}
+.po-fin-fy{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;margin-bottom:4px;}
+.po-fin-a{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;color:var(--text);}
+.po-fin-s{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-top:2px;}
+.po-fin-s.has{color:var(--text);font-weight:500;}
+.po-total-row{display:flex;justify-content:space-between;align-items:center;
+  background:var(--gdim);border:1px solid var(--border2);border-radius:6px;padding:10px 14px;margin-top:8px;}
+.po-total-lbl{font-family:'DM Mono',monospace;font-size:10px;color:var(--g2);letter-spacing:1px;text-transform:uppercase;}
+.po-total-val{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:700;color:var(--g);}
+.po-prog-row{display:flex;align-items:center;gap:10px;margin-top:6px;}
+.po-prog-lbl{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);width:90px;flex-shrink:0;}
+.po-prog-bar{flex:1;height:8px;background:var(--s3);border-radius:4px;overflow:hidden;}
+.po-prog-fill{height:100%;border-radius:4px;background:var(--g);transition:width .5s;}
+.po-prog-pct{font-family:'DM Mono',monospace;font-size:10px;color:var(--text);width:36px;text-align:right;flex-shrink:0;}
+.po-move{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.po-stage-sel{background:var(--s2);border:1px solid var(--border2);color:var(--text);
+  padding:7px 10px;border-radius:5px;font-size:13px;font-family:'Barlow',sans-serif;outline:none;flex:1;
+  transition:border-color .18s;}
+.po-stage-sel:focus{border-color:var(--g);}
+.po-stream-sel{background:var(--s2);border:1px solid var(--border2);color:var(--text);
+  padding:7px 10px;border-radius:5px;font-size:13px;font-family:'Barlow',sans-serif;outline:none;flex:1;
+  transition:border-color .18s;}
+
+/* ════════════════════════════════════════════════════════════
+   ADD / EDIT MODAL
+════════════════════════════════════════════════════════════ */
+.mo{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:400;
+  display:none;align-items:center;justify-content:center;backdrop-filter:blur(5px);}
+.mo.open{display:flex;}
+.mb{background:#fff;border:1px solid var(--border2);border-top:4px solid var(--g);
+  border-radius:12px;padding:28px;width:540px;max-width:95vw;max-height:92vh;
+  overflow-y:auto;position:relative;animation:pIn .18s ease;}
+.mt{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;color:var(--g);margin-bottom:20px;}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.fgg{display:flex;flex-direction:column;gap:4px;}
+.fgg.full{grid-column:1/-1;}
+label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);}
+.fi{background:var(--s2);border:1px solid var(--border2);color:var(--text);
+  padding:8px 11px;border-radius:5px;font-size:13px;font-family:'Barlow',sans-serif;outline:none;transition:border-color .18s;}
+.fi:focus{border-color:var(--g);}
+.ma{display:flex;gap:10px;margin-top:20px;justify-content:flex-end;}
+.mc{position:absolute;top:14px;right:14px;background:transparent;border:none;
+  color:var(--muted);font-size:16px;cursor:pointer;transition:color .15s;}
+.mc:hover{color:var(--text);}
+
+/* ── FOOTER ─────────────────────────────────────────────── */
+footer{margin-top:40px;padding:20px 0;border-top:1px solid var(--border);
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;
+  font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:2px;}
+footer .fg2{color:var(--g);}
+
+/* responsive */
+@media(max-width:700px){
+  .pipe-header,.pipe-desc-row,.pipe-row{grid-template-columns:70px repeat(4,1fr);}
+  .stream-label{font-size:11px;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ══ HEADER ═══════════════════════════════════════════════ -->
+<header>
+  <div class="hdr">
+    <div>
+      <div class="brand-eye">Innovation Platform &nbsp;·&nbsp; Pipeline &amp; Budget</div>
+      <div class="brand-row"><span class="brand-f">Fortescue</span><span class="brand-z">Zero</span></div>
+      <div class="brand-sub">FY26–FY29 &nbsp;·&nbsp; Real Zero Technology Portfolio &nbsp;·&nbsp; Pipeline + Forecast linked</div>
+    </div>
+    <div class="hdr-r">
+      <div class="hdr-date">Updated <span id="hdr-date">—</span></div>
+      <div class="hdr-bdg">$6,000,000<small>annual budget ceiling</small></div>
+    </div>
+  </div>
+  <div id="al-over" class="alert al-d">⚠ FY26 allocated spend exceeds the $6,000,000 annual budget ceiling.</div>
+  <div id="al-near" class="alert al-w">⚡ FY26 allocated spend is within 10% of the annual budget ceiling.</div>
+</header>
+
+<!-- ══ KPIs ═════════════════════════════════════════════════ -->
+<div class="kpi-strip" id="kpi-strip"></div>
+
+<!-- ══ TABS ═════════════════════════════════════════════════ -->
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('pipeline',this)">📋 Pipeline</button>
+  <button class="tab-btn"        onclick="switchTab('forecast',this)">📊 Forecast Table</button>
+  <button class="tab-btn"        onclick="switchTab('charts',this)">📈 Charts</button>
+  <button class="tab-btn"        onclick="switchTab('timeline',this)">🗓 Timeline</button>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     PIPELINE PANEL
+══════════════════════════════════════════════════════════ -->
+<div class="panel active" id="panel-pipeline">
+  <div class="pipe-toolbar">
+    <div>
+      <div class="pipe-ttl">Innovation Pipeline — Current State</div>
+      <div class="drag-hint" style="margin-top:4px;">Drag cards between stages &nbsp;·&nbsp; Click ⓘ for financial details</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn btn-p" onclick="openAdd('pipeline')">+ Add Project</button>
+      <button class="btn btn-g" onclick="doExport()">Export CSV</button>
+    </div>
+  </div>
+  <div class="pipe-wrap">
+    <div class="pipe-inner">
+      <!-- Stage headers -->
+      <div class="pipe-header">
+        <div class="ph-blank"></div>
+        <div class="pipe-stage-hdr ph-idea">Opportunity &amp;<br>Idea Generation</div>
+        <div class="pipe-stage-hdr ph-eval">Evaluation &amp;<br>Selection</div>
+        <div class="pipe-stage-hdr ph-proto">Prototype &amp;<br>Testing</div>
+        <div class="pipe-stage-hdr ph-impl">Implementation</div>
+      </div>
+      <!-- Stage descriptions -->
+      <div class="pipe-desc-row">
+        <div class="pipe-desc pd-blank"></div>
+        <div class="pipe-desc"><strong>Search &amp; exploration stage.</strong> Initial triage and high-level evaluation.</div>
+        <div class="pipe-desc"><strong>Convergent Phase.</strong> Evaluating and prioritising ops and ideas based on strategic alignment, feasibility, market potential and financial impact.</div>
+        <div class="pipe-desc"><strong>Validation stage.</strong> Prototyping to build an MVP that meets requirements and market needs.</div>
+        <div class="pipe-desc"><strong>Execution/Launch stage.</strong> Bringing the innovation to market or operational use, scaling successful solutions.</div>
+      </div>
+      <!-- Stream rows — built by JS -->
+      <div id="pipe-rows"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     FORECAST TABLE PANEL
+══════════════════════════════════════════════════════════ -->
+<div class="panel" id="panel-forecast">
+  <div class="tbl-card">
+    <div class="tbl-bar">
+      <div class="tbl-ttl">Project Allocations &amp; Spend</div>
+      <div class="tbl-ctrl">
+        <div style="display:flex;gap:4px;flex-wrap:wrap;">
+          <button class="yp active" onclick="setFY('all',this)">All FY</button>
+          <button class="yp"        onclick="setFY('FY26',this)">FY26</button>
+          <button class="yp"        onclick="setFY('FY27',this)">FY27</button>
+          <button class="yp"        onclick="setFY('FY28',this)">FY28</button>
+          <button class="yp"        onclick="setFY('FY29',this)">FY29</button>
+        </div>
+        <button class="btn btn-p btn-sm" onclick="openAdd('forecast')">+ Add Project</button>
+        <button class="btn btn-g btn-sm" onclick="doExport()">Export CSV</button>
+      </div>
+    </div>
+    <div class="tbl-scroll">
+      <table>
+        <thead><tr id="th"></tr></thead>
+        <tbody id="tb"></tbody>
+        <tfoot><tr id="tf"></tr></tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     CHARTS PANEL
+══════════════════════════════════════════════════════════ -->
+<div class="panel" id="panel-charts">
+  <div class="charts-grid">
+    <div class="cc">
+      <div class="cc-hdr"><div class="cc-ttl">Allocation by Financial Year</div><div class="cc-sub">Allocated vs spent vs $6M annual ceiling</div></div>
+      <div class="canvas-wrap" style="height:270px;"><canvas id="ch-fy"></canvas></div>
+      <div class="leg" id="leg-fy"></div>
+    </div>
+    <div class="cc">
+      <div class="cc-hdr"><div class="cc-ttl">FY26 Spend Progress</div><div class="cc-sub">Allocated vs actual spend · current year</div></div>
+      <div class="wf-scroll" id="wf"></div>
+      <div class="leg" style="margin-top:10px;">
+        <div class="li"><div class="ld" style="background:rgba(106,170,0,0.4)"></div>Allocated</div>
+        <div class="li"><div class="ld" style="background:var(--text)"></div>Spent</div>
+      </div>
+    </div>
+  </div>
+  <div class="charts-grid">
+    <div class="cc">
+      <div class="cc-hdr"><div class="cc-ttl">FY26 Project Mix</div><div class="cc-sub">Allocation share by project</div></div>
+      <div class="canvas-wrap" style="height:280px;"><canvas id="ch-donut"></canvas></div>
+    </div>
+    <div class="cc">
+      <div class="cc-hdr"><div class="cc-ttl">4-Year Commitment Curve</div><div class="cc-sub">Cumulative allocation FY26–FY29 vs rolling $6M ceiling</div></div>
+      <div class="canvas-wrap" style="height:280px;"><canvas id="ch-line"></canvas></div>
+      <div class="leg" style="margin-top:10px;">
+        <div class="li"><div class="ld" style="background:var(--g)"></div>Cumulative allocation</div>
+        <div class="li"><div class="ld" style="background:var(--danger);opacity:.7"></div>Annual ceiling ×n</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     TIMELINE PANEL
+══════════════════════════════════════════════════════════ -->
+<div class="panel" id="panel-timeline">
+  <div class="cc">
+    <div class="cc-hdr"><div class="cc-ttl">Project Timeline — Active Financial Years</div><div class="cc-sub">Colour intensity proportional to allocation size</div></div>
+    <div class="tl-outer" id="tl-outer"></div>
+  </div>
+</div>
+
+</div><!-- /wrap -->
+
+<!-- ══ PROJECT DETAIL POPOUT ═════════════════════════════════ -->
+<div class="popout-overlay" id="popout-overlay">
+  <div class="popout">
+    <button class="po-close" onclick="closePopout()">✕</button>
+    <div class="po-name"  id="po-name">—</div>
+    <div class="po-code"  id="po-code">—</div>
+    <div class="po-stage-row" id="po-badges"></div>
+
+    <div class="po-section">
+      <div class="po-section-ttl">Financial Overview</div>
+      <div class="po-fin-grid" id="po-fin-grid"></div>
+      <div class="po-total-row">
+        <div class="po-total-lbl">4-Year Total Allocation</div>
+        <div class="po-total-val" id="po-total">—</div>
+      </div>
+      <div style="margin-top:12px;" id="po-prog"></div>
+    </div>
+
+    <div class="po-section">
+      <div class="po-section-ttl">Move Project</div>
+      <div class="po-move">
+        <select class="po-stream-sel" id="po-stream-sel">
+          <option value="Power Systems">Power Systems</option>
+          <option value="Elysia">Elysia</option>
+          <option value="M&AE & Catapult">M&amp;AE &amp; Catapult</option>
+          <option value="Adjacent">Adjacent</option>
+        </select>
+        <select class="po-stage-sel" id="po-stage-sel">
+          <option value="idea">Opportunity &amp; Idea Generation</option>
+          <option value="eval">Evaluation &amp; Selection</option>
+          <option value="proto">Prototype &amp; Testing</option>
+          <option value="impl">Implementation</option>
+        </select>
+        <button class="btn btn-p" onclick="applyMove()">Move</button>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn btn-g" onclick="openEditFromPopout()">Edit Financials</button>
+      <button class="btn btn-g" onclick="closePopout()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ADD / EDIT MODAL ══════════════════════════════════════ -->
+<div class="mo" id="mo">
+  <div class="mb">
+    <button class="mc" onclick="closeMo()">✕</button>
+    <div class="mt" id="mo-title">+ Add New Project</div>
+    <div class="fg">
+      <div class="fgg full"><label>Project Name</label><input class="fi" id="m-name" type="text" placeholder="e.g. Grid-Edge Storage Pilot"></div>
+      <div class="fgg"><label>Project Code</label><input class="fi" id="m-code" type="text" placeholder="P1800"></div>
+      <div class="fgg"><label>Stream</label>
+        <select class="fi" id="m-stream">
+          <option value="Power Systems">Power Systems</option>
+          <option value="Elysia">Elysia</option>
+          <option value="M&AE & Catapult">M&amp;AE &amp; Catapult</option>
+          <option value="Adjacent">Adjacent</option>
+        </select>
+      </div>
+      <div class="fgg"><label>Pipeline Stage</label>
+        <select class="fi" id="m-stage">
+          <option value="idea">Opportunity &amp; Idea Generation</option>
+          <option value="eval">Evaluation &amp; Selection</option>
+          <option value="proto">Prototype &amp; Testing</option>
+          <option value="impl">Implementation</option>
+        </select>
+      </div>
+      <div class="fgg"><label>Alloc FY26 ($)</label><input class="fi" id="m-a26" type="number" min="0" placeholder="0"></div>
+      <div class="fgg"><label>Spent FY26 ($)</label><input class="fi" id="m-s26" type="number" min="0" placeholder="0"></div>
+      <div class="fgg"><label>Alloc FY27 ($)</label><input class="fi" id="m-a27" type="number" min="0" placeholder="0"></div>
+      <div class="fgg"><label>Spent FY27 ($)</label><input class="fi" id="m-s27" type="number" min="0" placeholder="0"></div>
+      <div class="fgg"><label>Alloc FY28 ($)</label><input class="fi" id="m-a28" type="number" min="0" placeholder="0"></div>
+      <div class="fgg"><label>Spent FY28 ($)</label><input class="fi" id="m-s28" type="number" min="0" placeholder="0"></div>
+      <div class="fgg"><label>Alloc FY29 ($)</label><input class="fi" id="m-a29" type="number" min="0" placeholder="0"></div>
+      <div class="fgg"><label>Spent FY29 ($)</label><input class="fi" id="m-s29" type="number" min="0" placeholder="0"></div>
+    </div>
+    <div class="ma">
+      <button class="btn btn-g" onclick="closeMo()">Cancel</button>
+      <button class="btn btn-p" id="mo-save-btn" onclick="saveProject()">Add Project</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <footer>
+    <span><span class="fg2">FORTESCUE ZERO</span> &nbsp;·&nbsp; INNOVATION PLATFORM</span>
+    <span>Pipeline &amp; Forecast linked &nbsp;·&nbsp; Internal Use Only &nbsp;·&nbsp; FY26–FY29</span>
+  </footer>
+</div>
+
+<script>
+/* ════════════════════════════════════════════════════════════
+   SINGLE SOURCE OF TRUTH — all data lives here
+════════════════════════════════════════════════════════════ */
+const BUDGET = 6000000;
+
+const STAGES = ['idea','eval','proto','impl'];
+const STAGE_LABELS = {idea:'Opportunity & Idea',eval:'Evaluation & Selection',proto:'Prototype & Testing',impl:'Implementation'};
+const STREAMS = ['Power Systems','Elysia','M&AE & Catapult','Adjacent'];
+
+const STREAM_STYLE = {
+  'Power Systems':    {cls:'sl-power',  badge:'#6aaa00', text:'#fff'},
+  'Elysia':           {cls:'sl-elysia', badge:'#2d7a00', text:'#fff'},
+  'M&AE & Catapult':  {cls:'sl-mae',    badge:'#111a08', text:'#fff'},
+  'Adjacent':         {cls:'sl-adj',    badge:'#558800', text:'#fff'},
+};
+
+const STAGE_STYLE = {
+  idea: {bg:'#c8f060',text:'#111a08',cls:'sb-idea'},
+  eval: {bg:'#6aaa00',text:'#ffffff',cls:'sb-eval'},
+  proto:{bg:'#2d7a00',text:'#ffffff',cls:'sb-proto'},
+  impl: {bg:'#111a08',text:'#ffffff',cls:'sb-impl'},
+};
+
+// Projects — single array, pipeline position (stage+stream) stored alongside financials
+let P = [
+  {name:"Cell Chemistry Pre-Evaluation",    code:"P2001G10", stream:"Adjacent",          stage:"proto",
+   a26:687500, s26:0, a27:687500, s27:0, a28:687500, s28:0, a29:687500, s29:0},
+  {name:"Cell Chemistry Pre-Qualification", code:"P2007G2",  stream:"Adjacent",          stage:"proto",
+   a26:1462000,s26:0, a27:1462000,s27:0, a28:1462000,s28:0, a29:1462000,s29:0},
+  {name:"Oxford Prosperity Partnership",    code:"P1708P1",  stream:"Adjacent",          stage:"eval",
+   a26:920000, s26:0, a27:920000, s27:0, a28:920000, s28:0, a29:0,      s29:0},
+  {name:"Multichem",                        code:"P1750P1",  stream:"Elysia",            stage:"proto",
+   a26:416000, s26:0, a27:1042000,s27:0, a28:1042000,s28:0, a29:0,      s29:0},
+  {name:"TCO Development & Improvement",    code:"P1787",    stream:"Elysia",            stage:"proto",
+   a26:200000, s26:0, a27:0,      s27:0, a28:0,      s28:0, a29:0,      s29:0},
+  {name:"FE Unleashed",                     code:"P1725P1",  stream:"M&AE & Catapult",  stage:"proto",
+   a26:250000, s26:250000,a27:0,  s27:0, a28:0,      s28:0, a29:0,      s29:0},
+  {name:"Elysia Powertrain",                code:"P1748P1",  stream:"Elysia",            stage:"impl",
+   a26:246000, s26:47000, a27:199000,s27:0,a28:0,    s28:0, a29:0,      s29:0},
+  {name:"Faraday Institute",                code:"P1749P1",  stream:"Adjacent",          stage:"eval",
+   a26:20000,  s26:0, a27:20000,  s27:0, a28:20000,  s28:0, a29:20000,  s29:0},
+  {name:"UofM EVC",                         code:"P1789",    stream:"Adjacent",          stage:"eval",
+   a26:30000,  s26:0, a27:30000,  s27:0, a28:30000,  s28:0, a29:30000,  s29:0},
+  {name:"Greentown Labs",                   code:"P1199G4",  stream:"Adjacent",          stage:"eval",
+   a26:220000, s26:220000,a27:220000,s27:0,a28:220000,s28:0,a29:0,      s29:0},
+  {name:"Modular High-Power Inverter",      code:"P1783",    stream:"Power Systems",     stage:"proto",
+   a26:200000, s26:0, a27:0,      s27:0, a28:0,      s28:0, a29:0,      s29:0},
+  {name:"Arming Staff",                     code:"P1782",    stream:"Power Systems",     stage:"proto",
+   a26:200000, s26:0, a27:0,      s27:0, a28:0,      s28:0, a29:0,      s29:0},
+  {name:"Second Life BESS Demonstrator",    code:"P1785",    stream:"Power Systems",     stage:"eval",
+   a26:20000,  s26:0, a27:0,      s27:0, a28:0,      s28:0, a29:0,      s29:0},
+  {name:"Data Presentation",               code:"P1199G4",  stream:"Power Systems",     stage:"proto",
+   a26:20000,  s26:0, a27:0,      s27:0, a28:0,      s28:0, a29:0,      s29:0},
+  // Pipeline-only ideas (no budget yet)
+  {name:"Fuel Cells",                       code:"—",        stream:"Power Systems",     stage:"idea",
+   a26:0,s26:0,a27:0,s27:0,a28:0,s28:0,a29:0,s29:0},
+  {name:"3D Printing",                      code:"—",        stream:"Power Systems",     stage:"idea",
+   a26:0,s26:0,a27:0,s27:0,a28:0,s28:0,a29:0,s29:0},
+  {name:"Megawatt Charging Systems",        code:"—",        stream:"Power Systems",     stage:"idea",
+   a26:0,s26:0,a27:0,s27:0,a28:0,s28:0,a29:0,s29:0},
+  {name:"Alternate Fuels",                  code:"—",        stream:"Power Systems",     stage:"idea",
+   a26:0,s26:0,a27:0,s27:0,a28:0,s28:0,a29:0,s29:0},
+  {name:"Solid State Transformers",         code:"—",        stream:"Power Systems",     stage:"idea",
+   a26:0,s26:0,a27:0,s27:0,a28:0,s28:0,a29:0,s29:0},
+  {name:"Low State of Health LFP",          code:"—",        stream:"Elysia",            stage:"idea",
+   a26:0,s26:0,a27:0,s27:0,a28:0,s28:0,a29:0,s29:0},
+  {name:"Decarb - Rust Batteries",          code:"—",        stream:"Adjacent",          stage:"idea",
+   a26:0,s26:0,a27:0,s27:0,a28:0,s28:0,a29:0,s29:0},
+  {name:"Decarb - Redox Loop Battery 10DQ", code:"—",        stream:"Adjacent",          stage:"idea",
+   a26:0,s26:0,a27:0,s27:0,a28:0,s28:0,a29:0,s29:0},
+  {name:"Decarb - Remote Diesel Gen (Std Electron)",code:"—",stream:"Adjacent",          stage:"eval",
+   a26:0,s26:0,a27:0,s27:0,a28:0,s28:0,a29:0,s29:0},
+  {name:"Decarb - Explosives & Blasting (Solidec)",code:"—", stream:"Adjacent",          stage:"proto",
+   a26:0,s26:0,a27:0,s27:0,a28:0,s28:0,a29:0,s29:0},
+];
+
+// modal state
+let editIdx = null;
+let popoutIdx = null;
+let curFY = 'all';
+let CH = {};
+
+/* ── UTILS ──────────────────────────────────────────────── */
+const nv = v => Number(v)||0;
+const fmtD = v => v ? '$'+nv(v).toLocaleString('en-US') : '—';
+const fmtK = v => { if(!v||v===0)return'—'; return v>=1e6?'$'+(v/1e6).toFixed(2)+'M':'$'+(v/1000).toFixed(0)+'K'; };
+const today = () => new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+const yr = fy => ({a:'a'+fy.slice(2), s:'s'+fy.slice(2)});
+const totalAlloc = p => nv(p.a26)+nv(p.a27)+nv(p.a28)+nv(p.a29);
+const totalSpent = p => nv(p.s26)+nv(p.s27)+nv(p.s28)+nv(p.s29);
+
+function tots(){
+  let r={a26:0,s26:0,a27:0,s27:0,a28:0,s28:0,a29:0,s29:0};
+  P.forEach(p=>{r.a26+=nv(p.a26);r.s26+=nv(p.s26);r.a27+=nv(p.a27);r.s27+=nv(p.s27);
+                r.a28+=nv(p.a28);r.s28+=nv(p.s28);r.a29+=nv(p.a29);r.s29+=nv(p.s29);});
+  return r;
+}
+
+/* ── KPIs ───────────────────────────────────────────────── */
+function renderKPIs(){
+  const t=tots();
+  const rem=BUDGET-t.a26;
+  const sp=t.a26>0?Math.round(t.s26/t.a26*100):0;
+  const act=P.filter(p=>totalAlloc(p)>0).length;
+  const stageCount = s => P.filter(p=>p.stage===s).length;
+  document.getElementById('kpi-strip').innerHTML=`
+    <div class="kpi"><div class="kpi-l">Annual Budget</div><div class="kpi-v g">$6.00M</div><div class="kpi-s">Ceiling</div></div>
+    <div class="kpi"><div class="kpi-l">FY26 Allocated</div><div class="kpi-v">${fmtK(t.a26)}</div><div class="kpi-s">${Math.round(t.a26/BUDGET*100)}% of budget</div></div>
+    <div class="kpi"><div class="kpi-l">FY26 Spent</div><div class="kpi-v">${fmtK(t.s26)}</div><div class="kpi-s">${sp}% of allocation</div></div>
+    <div class="kpi"><div class="kpi-l">FY26 Remaining</div><div class="kpi-v g">${fmtK(rem)}</div><div class="kpi-s">Unallocated headroom</div></div>
+    <div class="kpi"><div class="kpi-l">Funded Projects</div><div class="kpi-v">${act}</div><div class="kpi-s">With allocation</div></div>
+    <div class="kpi"><div class="kpi-l">Total Projects</div><div class="kpi-v">${P.length}</div><div class="kpi-s">Across all stages</div></div>
+    <div class="kpi"><div class="kpi-l">In Pipeline</div><div class="kpi-v">${stageCount('idea')+stageCount('eval')}</div><div class="kpi-s">Idea &amp; Evaluation</div></div>
+    <div class="kpi"><div class="kpi-l">In Delivery</div><div class="kpi-v g">${stageCount('proto')+stageCount('impl')}</div><div class="kpi-s">Prototype &amp; Impl.</div></div>
+  `;
+  document.getElementById('hdr-date').textContent = today();
+}
+
+function renderAlerts(){
+  const t=tots();
+  document.getElementById('al-over').classList.toggle('show',t.a26>BUDGET);
+  document.getElementById('al-near').classList.toggle('show',t.a26<=BUDGET&&t.a26>BUDGET*.9);
+}
+
+/* ════════════════════════════════════════════════════════════
+   PIPELINE RENDER
+════════════════════════════════════════════════════════════ */
+function renderPipeline(){
+  let html = '';
+  STREAMS.forEach(stream => {
+    const sty = STREAM_STYLE[stream];
+    html += `<div class="pipe-row">
+      <div class="stream-label ${sty.cls}">${stream.replace(' & ','<br>&amp;<br>')}</div>`;
+    STAGES.forEach(stage => {
+      const projs = P.filter(p=>p.stream===stream && p.stage===stage);
+      html += `<div class="stage-cell" 
+        data-stream="${esc(stream)}" data-stage="${stage}"
+        ondragover="onDragOver(event,this)" 
+        ondragleave="onDragLeave(this)"
+        ondrop="onDrop(event,this)">`;
+      projs.forEach(p => {
+        const idx = P.indexOf(p);
+        const ta = totalAlloc(p);
+        const ts = totalSpent(p);
+        const ss = STAGE_STYLE[p.stage];
+        html += `<div class="proj-card" draggable="true"
+          ondragstart="onDragStart(event,${idx})"
+          ondragend="onDragEnd(event)">
+          <button class="pc-info-btn" onclick="openPopout(${idx})">ⓘ</button>
+          <div class="pc-name">${p.name}</div>
+          ${p.code!=='—'?`<div class="pc-code">${p.code}</div>`:''}
+          <div class="pc-fin">
+            ${ta>0?`<span class="pc-pill alloc">${fmtK(ta)}</span>`:''}
+            ${ts>0?`<span class="pc-pill spent">Spent: ${fmtK(ts)}</span>`:''}
+            ${ta===0&&ts===0?`<span class="pc-pill">No budget</span>`:''}
+          </div>
+        </div>`;
+      });
+      html += `<button class="add-card-btn" onclick="openAdd('pipeline','${esc(stream)}','${stage}')">+ Add</button>`;
+      html += `</div>`;
+    });
+    html += `</div>`;
+  });
+  document.getElementById('pipe-rows').innerHTML = html;
+}
+
+function esc(s){ return s.replace(/'/g,"&#39;"); }
+
+/* ── DRAG & DROP ────────────────────────────────────────── */
+let dragIdx = null;
+function onDragStart(e, idx){
+  dragIdx = idx;
+  e.dataTransfer.effectAllowed = 'move';
+  setTimeout(()=>e.target.classList.add('dragging'),0);
+}
+function onDragEnd(e){ e.target.classList.remove('dragging'); }
+function onDragOver(e, cell){
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  cell.classList.add('drag-over');
+}
+function onDragLeave(cell){ cell.classList.remove('drag-over','drag-over-invalid'); }
+function onDrop(e, cell){
+  e.preventDefault();
+  cell.classList.remove('drag-over','drag-over-invalid');
+  if(dragIdx===null) return;
+  const newStage  = cell.dataset.stage;
+  const newStream = cell.dataset.stream;
+  P[dragIdx].stage  = newStage;
+  P[dragIdx].stream = newStream;
+  dragIdx = null;
+  refresh();
+}
+
+/* ════════════════════════════════════════════════════════════
+   PROJECT DETAIL POPOUT
+════════════════════════════════════════════════════════════ */
+function openPopout(idx){
+  popoutIdx = idx;
+  const p = P[idx];
+  document.getElementById('po-name').textContent = p.name;
+  document.getElementById('po-code').textContent = p.code !== '—' ? p.code : 'No project code';
+
+  // badges
+  const ss = STAGE_STYLE[p.stage];
+  const sr = STREAM_STYLE[p.stream];
+  document.getElementById('po-badges').innerHTML = `
+    <span class="stage-badge ${ss.cls}">${STAGE_LABELS[p.stage]}</span>
+    <span class="po-stream-badge" style="background:${sr.badge};color:${sr.text}">${p.stream}</span>
+  `;
+
+  // financial grid
+  const fys = [{fy:'FY26',a:p.a26,s:p.s26},{fy:'FY27',a:p.a27,s:p.s27},{fy:'FY28',a:p.a28,s:p.s28},{fy:'FY29',a:p.a29,s:p.s29}];
+  document.getElementById('po-fin-grid').innerHTML = fys.map(f=>`
+    <div class="po-fin-cell">
+      <div class="po-fin-fy">${f.fy}</div>
+      <div class="po-fin-a">${f.a>0?fmtK(f.a):'—'}</div>
+      <div class="po-fin-s ${f.s>0?'has':''}">Spent: ${f.s>0?fmtK(f.s):'—'}</div>
+    </div>`).join('');
+
+  const ta = totalAlloc(p), ts = totalSpent(p);
+  document.getElementById('po-total').textContent = ta>0 ? fmtD(ta) : '—';
+
+  // progress bars
+  const fys2 = ['FY26','FY27','FY28','FY29'];
+  const keys = [{a:'a26',s:'s26'},{a:'a27',s:'s27'},{a:'a28',s:'s28'},{a:'a29',s:'s29'}];
+  let progHtml = '';
+  fys2.forEach((fy,i)=>{
+    const a=nv(p[keys[i].a]),s=nv(p[keys[i].s]);
+    if(!a) return;
+    const pct=Math.min(100,Math.round(s/a*100));
+    progHtml+=`<div class="po-prog-row">
+      <div class="po-prog-lbl">${fy}</div>
+      <div class="po-prog-bar"><div class="po-prog-fill" style="width:${pct}%"></div></div>
+      <div class="po-prog-pct">${pct}%</div>
+    </div>`;
+  });
+  document.getElementById('po-prog').innerHTML = progHtml || '<div style="font-size:12px;color:var(--muted2)">No budget allocated</div>';
+
+  // move selects
+  document.getElementById('po-stream-sel').value = p.stream;
+  document.getElementById('po-stage-sel').value  = p.stage;
+
+  document.getElementById('popout-overlay').classList.add('open');
+}
+function closePopout(){ document.getElementById('popout-overlay').classList.remove('open'); }
+
+function applyMove(){
+  if(popoutIdx===null) return;
+  P[popoutIdx].stage  = document.getElementById('po-stage-sel').value;
+  P[popoutIdx].stream = document.getElementById('po-stream-sel').value;
+  closePopout();
+  refresh();
+}
+
+function openEditFromPopout(){
+  if(popoutIdx===null) return;
+  closePopout();
+  openEdit(popoutIdx);
+}
+
+/* ════════════════════════════════════════════════════════════
+   FORECAST TABLE
+════════════════════════════════════════════════════════════ */
+function renderTable(){
+  const cols = curFY==='all' ? ['FY26','FY27','FY28','FY29'] : [curFY];
+  const showTot = curFY==='all';
+
+  // head
+  let h=`<th class="c-name">Project</th><th class="c-code">Code</th><th class="c-stage">Stage</th>`;
+  cols.forEach(fy=>{h+=`<th class="c-alloc">Alloc ${fy}</th><th class="c-spent">Spent ${fy}</th>`;});
+  if(showTot) h+=`<th class="c-tot">Total Alloc</th>`;
+  h+=`<th class="c-act"></th>`;
+  document.getElementById('th').innerHTML=h;
+
+  // body — only show projects with some financial data OR all if forecast tab
+  let b='';
+  P.forEach((p,i)=>{
+    const ss = STAGE_STYLE[p.stage]||STAGE_STYLE.idea;
+    let r=`<td class="c-name">${p.name}</td>
+      <td class="c-code">${p.code}</td>
+      <td class="c-stage"><span class="stage-badge ${ss.cls}">${STAGE_LABELS[p.stage]||p.stage}</span></td>`;
+    cols.forEach(fy=>{
+      const{a,s}=yr(fy);
+      const av=nv(p[a]),sv=nv(p[s]);
+      const pct=av>0?Math.min(100,Math.round(sv/av*100)):0;
+      r+=`<td class="c-alloc ${av?'nz':'zv'}">${fmtD(av)}</td>`;
+      r+=`<td class="c-spent"><div class="spent-wrap">
+        <div class="pb"><div class="pb-f" style="width:${pct}%"></div></div>
+        <span class="sv ${sv?'':'zv'}">${fmtD(sv)}</span>
+      </div></td>`;
+    });
+    if(showTot){
+      const tot=totalAlloc(p);
+      r+=`<td class="c-tot">${fmtD(tot)}</td>`;
+    }
+    r+=`<td class="c-act"><div class="ea">
+      <button class="ib"   onclick="openPopout(${i})" title="Details">ⓘ</button>
+      <button class="ib"   onclick="openEdit(${i})"   title="Edit">✏</button>
+      <button class="ib d" onclick="delRow(${i})"     title="Delete">✕</button>
+    </div></td>`;
+    b+=`<tr data-i="${i}">${r}</tr>`;
+  });
+  document.getElementById('tb').innerHTML=b;
+
+  // foot
+  const t=tots();
+  const fm={FY26:{a:t.a26,s:t.s26},FY27:{a:t.a27,s:t.s27},FY28:{a:t.a28,s:t.s28},FY29:{a:t.a29,s:t.s29}};
+  let f=`<td class="c-name">Total</td><td class="c-code"></td><td class="c-stage"></td>`;
+  cols.forEach(fy=>{
+    const{a,s}=fm[fy];
+    f+=`<td class="c-alloc nz">${fmtD(a)}</td>`;
+    f+=`<td class="c-spent"><div class="spent-wrap"><span class="sv">${fmtD(s)}</span></div></td>`;
+  });
+  if(showTot) f+=`<td class="c-tot">${fmtD(t.a26+t.a27+t.a28+t.a29)}</td>`;
+  f+=`<td class="c-act"></td>`;
+  document.getElementById('tf').innerHTML=`<tr>${f}</tr>`;
+}
+
+function setFY(fy,btn){
+  curFY=fy;
+  document.querySelectorAll('.yp').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTable();
+}
+function delRow(i){ if(confirm(`Delete "${P[i].name}"?`)){ P.splice(i,1); refresh(); } }
+
+/* ════════════════════════════════════════════════════════════
+   ADD / EDIT MODAL
+════════════════════════════════════════════════════════════ */
+function openAdd(source, stream, stage){
+  editIdx = null;
+  document.getElementById('mo-title').textContent = '+ Add New Project';
+  document.getElementById('mo-save-btn').textContent = 'Add Project';
+  ['name','code','a26','s26','a27','s27','a28','s28','a29','s29'].forEach(id=>document.getElementById('m-'+id).value='');
+  if(stream) document.getElementById('m-stream').value = stream;
+  if(stage)  document.getElementById('m-stage').value  = stage;
+  document.getElementById('mo').classList.add('open');
+}
+function openEdit(idx){
+  editIdx = idx;
+  const p = P[idx];
+  document.getElementById('mo-title').textContent = 'Edit Project';
+  document.getElementById('mo-save-btn').textContent = 'Save Changes';
+  document.getElementById('m-name').value   = p.name;
+  document.getElementById('m-code').value   = p.code === '—' ? '' : p.code;
+  document.getElementById('m-stream').value = p.stream;
+  document.getElementById('m-stage').value  = p.stage;
+  document.getElementById('m-a26').value    = nv(p.a26)||'';
+  document.getElementById('m-s26').value    = nv(p.s26)||'';
+  document.getElementById('m-a27').value    = nv(p.a27)||'';
+  document.getElementById('m-s27').value    = nv(p.s27)||'';
+  document.getElementById('m-a28').value    = nv(p.a28)||'';
+  document.getElementById('m-s28').value    = nv(p.s28)||'';
+  document.getElementById('m-a29').value    = nv(p.a29)||'';
+  document.getElementById('m-s29').value    = nv(p.s29)||'';
+  document.getElementById('mo').classList.add('open');
+}
+function closeMo(){ document.getElementById('mo').classList.remove('open'); }
+function saveProject(){
+  const name = document.getElementById('m-name').value.trim();
+  if(!name){ alert('Project name required'); return; }
+  const obj = {
+    name,
+    code:  document.getElementById('m-code').value.trim()||'—',
+    stream:document.getElementById('m-stream').value,
+    stage: document.getElementById('m-stage').value,
+    a26:+document.getElementById('m-a26').value||0,
+    s26:+document.getElementById('m-s26').value||0,
+    a27:+document.getElementById('m-a27').value||0,
+    s27:+document.getElementById('m-s27').value||0,
+    a28:+document.getElementById('m-a28').value||0,
+    s28:+document.getElementById('m-s28').value||0,
+    a29:+document.getElementById('m-a29').value||0,
+    s29:+document.getElementById('m-s29').value||0,
+  };
+  if(editIdx !== null) P[editIdx] = obj;
+  else P.push(obj);
+  closeMo();
+  refresh();
+}
+
+/* ════════════════════════════════════════════════════════════
+   CHARTS
+════════════════════════════════════════════════════════════ */
+const GR='rgba(0,0,0,0.05)';
+const TC={color:'#4a5e2a',font:{family:'DM Mono',size:10}};
+const mkSc=cb=>({
+  x:{grid:{color:GR},ticks:{color:TC.color,font:TC.font}},
+  y:{grid:{color:GR},ticks:{color:TC.color,font:TC.font,callback:cb},beginAtZero:true}
+});
+
+const PAL=['#6aaa00','#4a8800','#2d6600','#0a4400','#111a08','#2a3a18','#3d5020','#506828',
+           '#8ac840','#aad860','#c8e880','#a0c050','#558800','#7aaa20','#90c030'];
+
+function chartFY(){
+  const t=tots();
+  const ctx=document.getElementById('ch-fy').getContext('2d');
+  if(CH.fy)CH.fy.destroy();
+  CH.fy=new Chart(ctx,{type:'bar',
+    data:{labels:['FY26','FY27','FY28','FY29'],datasets:[
+      {label:'Allocated',data:[t.a26,t.a27,t.a28,t.a29],
+        backgroundColor:['rgba(106,170,0,.85)','rgba(106,170,0,.65)','rgba(106,170,0,.45)','rgba(106,170,0,.28)'],
+        borderRadius:4,borderSkipped:false},
+      {label:'Spent',data:[t.s26,t.s27,t.s28,t.s29],backgroundColor:'rgba(17,26,8,.75)',borderRadius:4,borderSkipped:false},
+      {label:'Ceiling',data:[BUDGET,BUDGET,BUDGET,BUDGET],type:'line',borderColor:'rgba(204,34,0,.65)',
+        borderDash:[6,3],pointRadius:0,borderWidth:2,fill:false},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+fmtK(c.raw)}}},
+      scales:mkSc(v=>fmtK(v))}
+  });
+  document.getElementById('leg-fy').innerHTML=`
+    <div class="li"><div class="ld" style="background:rgba(106,170,0,.85)"></div>Allocated</div>
+    <div class="li"><div class="ld" style="background:rgba(17,26,8,.75)"></div>Spent</div>
+    <div class="li"><div class="ld" style="background:rgba(204,34,0,.65)"></div>$6M ceiling</div>`;
+}
+function chartWF(){
+  const act=P.filter(p=>nv(p.a26)>0);
+  const maxA=Math.max(...act.map(p=>nv(p.a26)),1);
+  document.getElementById('wf').innerHTML=act.map(p=>{
+    const a=nv(p.a26),s=nv(p.s26);
+    const pA=(a/maxA*100).toFixed(1), pS=a>0?Math.min(s/a*100,100).toFixed(1):0;
+    return`<div class="wf-row">
+      <div class="wf-lbl" title="${p.name}">${p.name}</div>
+      <div class="wf-trk"><div class="wf-af" style="width:${pA}%"></div><div class="wf-sf" style="width:${pS}%"></div></div>
+      <div class="wf-v">${fmtK(a)}</div></div>`;
+  }).join('');
+}
+function chartDonut(){
+  const act=P.filter(p=>nv(p.a26)>0);
+  const ctx=document.getElementById('ch-donut').getContext('2d');
+  if(CH.donut)CH.donut.destroy();
+  CH.donut=new Chart(ctx,{type:'doughnut',
+    data:{labels:act.map(p=>p.name),datasets:[{data:act.map(p=>nv(p.a26)),backgroundColor:PAL.slice(0,act.length),borderWidth:0,hoverOffset:10}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'62%',
+      plugins:{legend:{display:true,position:'right',labels:{color:'#4a5e2a',font:{family:'DM Mono',size:9},boxWidth:8,padding:8,
+        generateLabels(ch){return ch.data.labels.map((l,i)=>({text:l.length>22?l.slice(0,20)+'…':l,fillStyle:ch.data.datasets[0].backgroundColor[i],strokeStyle:'transparent',index:i}));}}},
+        tooltip:{callbacks:{label:c=>c.label+': '+fmtK(c.raw)+' ('+Math.round(c.raw/c.dataset.data.reduce((a,b)=>a+b,0)*100)+'%)'}}}}}); 
+}
+function chartLine(){
+  const t=tots();
+  const cum=[t.a26,t.a26+t.a27,t.a26+t.a27+t.a28,t.a26+t.a27+t.a28+t.a29];
+  const ctx=document.getElementById('ch-line').getContext('2d');
+  if(CH.line)CH.line.destroy();
+  CH.line=new Chart(ctx,{type:'line',
+    data:{labels:['FY26','FY27','FY28','FY29'],datasets:[
+      {label:'Cumulative',data:cum,borderColor:'#6aaa00',backgroundColor:'rgba(106,170,0,.07)',fill:true,tension:.35,pointBackgroundColor:'#6aaa00',pointRadius:5,pointHoverRadius:7},
+      {label:'Ceiling',data:[BUDGET,BUDGET*2,BUDGET*3,BUDGET*4],borderColor:'rgba(204,34,0,.5)',borderDash:[6,3],pointRadius:0,fill:false,tension:0}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmtK(c.raw)}}},
+      scales:mkSc(v=>fmtK(v))}});
+}
+function renderAllCharts(){ chartFY(); chartWF(); chartDonut(); chartLine(); }
+
+/* ── TIMELINE ───────────────────────────────────────────── */
+function renderTimeline(){
+  const fyk=[{a:'a26',l:'FY26'},{a:'a27',l:'FY27'},{a:'a28',l:'FY28'},{a:'a29',l:'FY29'}];
+  const act=P.filter(p=>totalAlloc(p)>0);
+  const mx=act.reduce((m,p)=>Math.max(m,totalAlloc(p)),1);
+  let h=`<div class="tl-inner"><div class="tl-yh">${fyk.map(f=>`<div class="tl-ylbl">${f.l}</div>`).join('')}</div>`;
+  act.forEach((p,pi)=>{
+    const col=PAL[pi%PAL.length];
+    h+=`<div class="tl-row2"><div class="tl-n" title="${p.name}">${p.name}</div><div class="tl-trk">${
+      fyk.map(f=>{const a=nv(p[f.a]);if(!a)return`<div class="tl-seg emp"></div>`;
+        const op=(0.35+0.65*(a/mx)).toFixed(2);
+        return`<div class="tl-seg" style="background:${col};opacity:${op}" title="${f.l}: ${fmtD(a)}">${fmtK(a)}</div>`;
+      }).join('')
+    }</div></div>`;
+  });
+  h+=`</div>`;
+  document.getElementById('tl-outer').innerHTML=h;
+}
+
+/* ── EXPORT ─────────────────────────────────────────────── */
+function doExport(){
+  const rows=[['Project','Code','Stream','Stage','Alloc FY26','Spent FY26','Alloc FY27','Spent FY27','Alloc FY28','Spent FY28','Alloc FY29','Spent FY29']];
+  P.forEach(p=>rows.push([p.name,p.code,p.stream,STAGE_LABELS[p.stage],p.a26,p.s26,p.a27,p.s27,p.a28,p.s28,p.a29,p.s29]));
+  const csv=rows.map(r=>r.map(v=>`"${v}"`).join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download='FZ_Innovation_Platform.csv';a.click();
+}
+
+/* ── TAB SWITCHING ──────────────────────────────────────── */
+function switchTab(tab,btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+tab).classList.add('active');
+  btn.classList.add('active');
+  if(tab==='charts')   setTimeout(renderAllCharts,30);
+  if(tab==='timeline') setTimeout(renderTimeline,30);
+  if(tab==='forecast') renderTable();
+}
+
+/* ── MASTER REFRESH ─────────────────────────────────────── */
+function refresh(){
+  renderKPIs();
+  renderAlerts();
+  renderPipeline();
+  renderTable();
+  // re-render charts/timeline if their panel is visible
+  if(document.getElementById('panel-charts').classList.contains('active'))   renderAllCharts();
+  if(document.getElementById('panel-timeline').classList.contains('active')) renderTimeline();
+}
+
+// INIT
+refresh();
+</script>
+</body>
+</html>
